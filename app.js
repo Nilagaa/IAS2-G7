@@ -702,6 +702,23 @@ function initAdmin() {
 
   if (!user) return;
 
+  const adminUser = document.getElementById("admin-user");
+  const adminSessionUser = document.getElementById("admin-session-user");
+  const adminSessionId = document.getElementById("admin-session-id");
+
+  if (adminUser) {
+    adminUser.textContent = user.username;
+  }
+
+  if (adminSessionUser) {
+    adminSessionUser.textContent = user.username;
+  }
+
+  if (adminSessionId) {
+    adminSessionId.textContent =
+      user.token.slice(-8).toUpperCase();
+  }
+
   const tbody =
     document.getElementById("logs-body");
 
