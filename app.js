@@ -225,6 +225,13 @@ function initAdmin() {
   if (!document.body.classList.contains("admin-page")) return;
   const user = requireRole("admin");
   if (!user) return;
+  const adminUserEl = document.getElementById("admin-user");
+  const adminSessionUserEl = document.getElementById("admin-session-user");
+  const adminSessionIdEl = document.getElementById("admin-session-id");
+  if (adminUserEl) adminUserEl.textContent = user.username;
+  if (adminSessionUserEl) adminSessionUserEl.textContent = user.username;
+  if (adminSessionIdEl) adminSessionIdEl.textContent = user.token.slice(-8).toUpperCase();
+
   const tbody = document.getElementById("logs-body");
   const empty = document.getElementById("empty-logs");
 
