@@ -140,7 +140,7 @@ function initializeDemoAdmin() {
   ) {
     users.push({
       username: "admin",
-      password: "AdminDemo123!",
+      password: "admin123123",
       privilege: "admin",
       createdAt: new Date().toISOString()
     });
