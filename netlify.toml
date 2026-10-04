@@ -1,0 +1,4 @@
+[build]
+  publish = "."
+
+# This is a static demo. No build command or backend is required.

@@ -1,3 +1,17 @@
+
+// Surface runtime errors instead of leaving the page appearing unresponsive.
+window.addEventListener("error", event => {
+  console.error("Security demo runtime error:", event.error || event.message);
+  const existing = document.getElementById("runtime-error-notice");
+  if (existing) return;
+  const notice = document.createElement("div");
+  notice.id = "runtime-error-notice";
+  notice.setAttribute("role", "alert");
+  notice.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;padding:12px 16px;background:#3b1111;color:#fff;border:1px solid #ef4444;font:12px/1.5 monospace;";
+  notice.textContent = "A JavaScript error interrupted this demo. Open your browser Developer Tools (F12) → Console for details, then refresh the page.";
+  document.body.appendChild(notice);
+});
+
 /*
  * Static-site teaching demo for Netlify.
  * Data: localStorage (browser-local, not shared between devices).
@@ -11,12 +25,31 @@ const USERNAME_RE = /^[A-Za-z0-9_.-]{3,32}$/;
 const SQL_META_RE = /(?:--|\/\*|\*\/|;|'|"|`|\\|\b(?:OR|AND)\b\s+\S+\s*(?:=|LIKE|IS)\s*|\bUNION\b|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|\bSLEEP\b|\bBENCHMARK\b)/i;
 
 function getJSON(key, fallback) {
-  try { const parsed = JSON.parse(localStorage.getItem(key)); return parsed ?? fallback; }
-  catch { return fallback; }
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key));
+    return parsed ?? fallback;
+  } catch (error) {
+    console.warn(`Local demo storage could not read ${key}; using an empty default.`, error);
+    return fallback;
+  }
 }
-function putJSON(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
-function getUsers() { return getJSON(DB.users, []); }
-function getLogs() { return getJSON(DB.logs, []); }
+function putJSON(key, value) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    console.error(`Local demo storage could not save ${key}.`, error);
+    return false;
+  }
+}
+function getUsers() {
+  const users = getJSON(DB.users, []);
+  return Array.isArray(users) ? users.filter(user => user && typeof user.username === "string") : [];
+}
+function getLogs() {
+  const logs = getJSON(DB.logs, []);
+  return Array.isArray(logs) ? logs.filter(item => item && typeof item === "object") : [];
+}
 function logEvent(username, type, success, details) {
   const logs = getLogs();
   logs.unshift({ timestamp: new Date().toISOString(), username: String(username || "anonymous").slice(0, 100), type, success: !!success, details: String(details || "").slice(0, 180) });
@@ -34,7 +67,10 @@ function initializeDemoAdmin() {
     putJSON(DB.users, users);
   }
 }
-function attemptMap() { return getJSON(DB.attempts, {}); }
+function attemptMap() {
+  const attempts = getJSON(DB.attempts, {});
+  return attempts && typeof attempts === "object" && !Array.isArray(attempts) ? attempts : {};
+}
 function attemptState(username) { return attemptMap()[username.toLowerCase()] || { count: 0, lockedUntil: 0 }; }
 function saveAttemptState(username, state) {
   const all = attemptMap(); all[username.toLowerCase()] = state; putJSON(DB.attempts, all);
@@ -99,7 +135,9 @@ function initLogin() {
     if (user) {
       saveAttemptState(username, { count: 0, lockedUntil: 0 });
       logEvent(username, "authentication", true, "Valid demo credentials");
-      const token = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`).replace(/-/g, "");
+      const token = (window.crypto && typeof window.crypto.randomUUID === "function"
+        ? window.crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}-${Math.random()}`).replace(/-/g, "");
       sessionStorage.setItem("auth_token", token);
       sessionStorage.setItem("auth_user", user.username);
       sessionStorage.setItem("auth_privilege", user.privilege === "admin" ? "admin" : "user");
