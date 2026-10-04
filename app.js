@@ -206,6 +206,9 @@ function logout() {
 document.querySelectorAll("[data-logout]").forEach(button => button.addEventListener("click", logout));
 
 function initHome() {
+  // This initializer is called on every page; only enforce a session on the dashboard.
+  // Without this guard, index.html and register.html redirect to index.html forever.
+  if (!document.body.classList.contains("dashboard-page")) return;
   const user = requireRole("user");
   if (!user) return;
   ["user-display", "hero-user", "session-user"].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = user.username; });
